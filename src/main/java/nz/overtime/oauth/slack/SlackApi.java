@@ -2,8 +2,11 @@ package nz.overtime.oauth.slack;
 
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.extractors.AccessTokenExtractor;
+import com.github.scribejava.core.extractors.JsonTokenExtractor;
 import com.github.scribejava.core.model.OAuthConfig;
 import com.github.scribejava.core.model.OAuthConstants;
+import com.github.scribejava.core.oauth.OAuth20ServiceImpl;
+import com.github.scribejava.core.oauth.OAuthService;
 import com.github.scribejava.core.utils.OAuthEncoder;
 import com.github.scribejava.core.utils.Preconditions;
 
@@ -12,7 +15,11 @@ import com.github.scribejava.core.utils.Preconditions;
  */
 public class SlackApi extends DefaultApi20 {
     private static final String AUTHORIZE_URL = "https://slack.com/oauth/authorize?client_id=%s&scope=%s";
+    private String team = "";
 
+    public void setTeam(String team) {
+        this.team = team;
+    }
 
     @Override
     public String getAccessTokenEndpoint() {
@@ -33,12 +40,19 @@ public class SlackApi extends DefaultApi20 {
             sb.append('&').append(OAuthConstants.STATE).append('=').append(OAuthEncoder.encode(config.getState()));
         }
 
-        //Needs Team
+        if (!team.isEmpty()) {
+            sb.append('&').append("team").append('=').append(OAuthEncoder.encode(team));
+        }
         return sb.toString();
     }
 
     @Override
     public AccessTokenExtractor getAccessTokenExtractor() {
-        return new SlackTokenExtractor();
+        return new JsonTokenExtractor();
+    }
+
+    @Override
+    public OAuthService createService(OAuthConfig config) {
+        return new SlackOAuth20ServiceImpl(this, config);
     }
 }

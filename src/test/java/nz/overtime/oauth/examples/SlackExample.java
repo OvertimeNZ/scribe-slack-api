@@ -2,11 +2,14 @@ package nz.overtime.oauth.examples;
 
 import java.util.Random;
 import java.util.Scanner;
+
+import com.github.scribejava.core.builder.ServiceBuilder;
 import nz.overtime.oauth.slack.SlackApi;
-import com.github.scribejava.core.builder.ServiceBuilder;;
+;
 import com.github.scribejava.core.model.Token;
 import com.github.scribejava.core.model.Verifier;
 import com.github.scribejava.core.oauth.OAuthService;
+import nz.overtime.oauth.slack.SlackOAuth20ServiceImpl;
 
 /**
  * @author Furze
@@ -18,20 +21,22 @@ public class SlackExample {
     private static final Token EMPTY_TOKEN = null;
 
     // Replace these with your client id and secret
-    private static final String clientId = "";
-    private static final String clientSecret = "";
+    private static final String CLIENT_ID = "client-id";
+    private static final String CLIENT_SECRET = "client-secret";
+    private static final String SLACK_TEAM = "";
 
     public static void main(String[] args) {
 
         final String secretState = "secret" + new Random().nextInt(999_999);
         final OAuthService service = new ServiceBuilder()
                 .provider(SlackApi.class)
-                .apiKey(clientId)
-                .apiSecret(clientSecret)
-               // .state(secretState)
+                .apiKey(CLIENT_ID)
+                .apiSecret(CLIENT_SECRET)
+                .state(secretState)
                 .scope("users:read")
                 .callback("http://www.example.com/oauth_callback/")
                 .build();
+
         final Scanner in = new Scanner(System.in, "UTF-8");
 
         System.out.println("=== " + NETWORK_NAME + "'s OAuth Workflow ===");
@@ -39,7 +44,14 @@ public class SlackExample {
 
         // Obtain the Authorization URL
         System.out.println("Fetching the Authorization URL...");
-        final String authorizationUrl = service.getAuthorizationUrl(EMPTY_TOKEN);
+
+        String authorizationUrl;
+        if(!SLACK_TEAM.isEmpty()){
+            authorizationUrl = ((SlackOAuth20ServiceImpl) service).getAuthorizationUrl(EMPTY_TOKEN, SLACK_TEAM);
+        } else {
+            authorizationUrl = service.getAuthorizationUrl(EMPTY_TOKEN);
+        }
+
         System.out.println("Got the Authorization URL!");
         System.out.println("Now go and authorize ScribeJava here:");
         System.out.println(authorizationUrl);
